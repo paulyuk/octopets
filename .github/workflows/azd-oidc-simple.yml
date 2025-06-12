@@ -107,8 +107,7 @@ jobs:
             echo "🔍 PR detected - running provision with preview"
             azd provision --preview
           else
-            echo "🚀 Main branch - deploying application"
-            # Set container image tag before running azd up
+            echo "🚀 Main branch - deploying application"            # Set container image tag before running azd up
             azd env set AZURE_CONTAINER_IMAGE_TAG $AZURE_CONTAINER_IMAGE_TAG
             echo "✅ Set container image tag to: $AZURE_CONTAINER_IMAGE_TAG"
             
@@ -119,7 +118,7 @@ jobs:
             echo "🏷️ Adding resource tag to container app..."
             # Get the container app resource ID
             RESOURCE_GROUP=$(azd env get-values | grep AZURE_RESOURCE_GROUP | cut -d '=' -f2)
-            CONTAINER_APP_NAME=$(azd env get-values | grep AZURE_CONTAINER_APPS_ENDPOINT | cut -d '.' -f1)
+            CONTAINER_APP_NAME="octopetsapi"
             
             if [ -n "$RESOURCE_GROUP" ] && [ -n "$CONTAINER_APP_NAME" ]; then
               echo "Resource Group: $RESOURCE_GROUP, Container App: $CONTAINER_APP_NAME"
