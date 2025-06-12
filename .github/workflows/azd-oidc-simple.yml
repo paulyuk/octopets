@@ -143,7 +143,7 @@ jobs:
                 # Tag the container app resource with the image tag
                 az tag update --resource-id "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/$CONTAINER_APP_NAME" \
                               --operation Merge \
-                              --tags "AZURE_CONTAINER_IMAGE_TAG=$AZURE_CONTAINER_IMAGE_TAG" || \
+                              --tags "CONTAINER_IMAGE_TAG=$AZURE_CONTAINER_IMAGE_TAG" || \
                 echo "⚠️ Failed to add tag to container app, but continuing workflow"
               else
                 echo "⚠️ Container app '$CONTAINER_APP_NAME' not found in resource group '$RESOURCE_GROUP'"
