@@ -1,3 +1,5 @@
+name: Deploy with AZD and OIDC
+
 on:
   workflow_dispatch:
   push:
@@ -115,5 +117,3 @@ jobs:
         run: |
           echo "📋 Getting deployment information..."
           azd show --output table || true
-
-          ENDPOINT=$(azd show --output json 2>/dev/null | jq -r '.services | to_entries](#)
