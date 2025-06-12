@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           export AZURE_ENV_NAME="${{ github.event.inputs.environment || 'dev' }}"
-          export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus' }}"
+          export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus2' }}"
           export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
           export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
           export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
@@ -74,6 +74,11 @@ jobs:
             echo "❌ Azure CLI is not logged in. The Azure/login action should have handled this."
             exit 1
           fi
+
+          echo "🔍 Changing working directory to ./apphost ..."
+          pwd
+          cd apphost
+          pwd
 
           if ! azd env select $AZURE_ENV_NAME 2>/dev/null; then
             echo "📦 Creating new azd environment: $AZURE_ENV_NAME"
