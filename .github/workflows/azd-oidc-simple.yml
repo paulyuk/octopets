@@ -78,10 +78,6 @@ jobs:
           echo "Location: $AZURE_LOCATION"
 
           azd auth login --client-id $AZURE_CLIENT_ID --federated-credential-provider github --tenant-id $AZURE_TENANT_ID
-          if ! az account show &>/dev/null; then
-            echo "❌ Azure CLI is not logged in. The Azure/login action should have handled this."
-            exit 1
-          fi
 
           echo "🔍 Changing working directory to ./apphost ..."
           pwd

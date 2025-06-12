@@ -17,8 +17,8 @@
 # Set parameters with defaults
 RESOURCE_GROUP=${1:-"rg-octopets"}
 CONTAINER_APP_NAME=${2:-"octopetsapi"}
-APP_INSIGHTS_NAME=${3:-"octopets_appinsights-abc123xyz456"}
-SUBSCRIPTION_ID=${4:-"12345678-abcd-9e8f-7g6h-5i4j3k2l1m0n"}
+APP_INSIGHTS_NAME=${3:-"octopets_appinsights-gkgt7sifzriwg"}
+SUBSCRIPTION_ID=${4:-"ca5ce512-88e1-44b1-97c6-22caf84fb2b0"}
 LOCATION=${5:-"eastus"}
 
 # Display parameter info
