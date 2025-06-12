@@ -1,10 +1,6 @@
 name: Deploy with AZD and OIDC
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 # Required permissions for OIDC
