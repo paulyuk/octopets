@@ -1,7 +1,17 @@
 name: Deploy with AZD and OIDC
 
 on:
-  workflow_dispatch:
+  workflow_d        echo "✅ AZD configured to use Azure CLI authentication"
+        
+    - name: Deploy with azd
+      shell: bash
+      run: |
+        # Set environment variables
+        export AZURE_ENV_NAME="${{ vars.AZURE_ENV_NAME || 'dev' }}"
+        export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus2' }}"
+        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
 
 # Required permissions for OIDC
 permissions:
@@ -18,7 +28,8 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Install azd
-      uses: Azure/setup-azd@v2    
+      uses: Azure/setup-azd@v2
+      
     - name: Log in with Azure (OIDC)
       uses: Azure/login@v2
       with:
@@ -27,29 +38,53 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         enable-oidc: true
         federated-credential-provider: github
+        # Ensure additional settings for headless operation        allow-no-subscriptions: false
         
-    - name: AZD Login (Headless)
+    - name: Configure AZD for Azure CLI authentication
       shell: bash
       run: |
-        echo "🔑 Logging in with AZD using federated credentials..."
-        azd auth login \
-          --client-id "${{ secrets.AZURE_CLIENT_ID }}" \
-          --federated-credential-provider "github" \
-          --tenant-id "${{ secrets.AZURE_TENANT_ID }}" \
-          --no-browser
-        echo "✅ AZD login successful"
-
-    - name: Deploy with azd
+        echo "🔑 Setting up AZD to use Azure CLI authentication..."
+        
+        # Explicitly set environment variables
+        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        
+        # Create the azd config directory if it doesn't exist
+        mkdir -p ~/.azd
+        
+        # Configure AZD to use Azure CLI authentication instead of interactive browser login
+        echo '{"defaults":{"auth":{"useAzureCli":true}}}' > ~/.azd/config.json
+        
+        # Verify AZD is using the correct configuration
+        cat ~/.azd/config.json
+        
+        echo "✅ AZD configured to use Azure CLI authentication"- name: Deploy with azd
       shell: bash
       run: |
         # Set environment variables
         export AZURE_ENV_NAME="${{ vars.AZURE_ENV_NAME || 'dev' }}"
         export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus2' }}"
         export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+        
+        # Display diagnostic information
+        echo "🔍 Diagnostic information:"
+        echo "Azure CLI version: $(az --version | head -n 1)"
+        echo "AZD version: $(azd version)"
+        echo "Current account: $(az account show --query name -o tsv || echo 'Not logged in')"
+        echo "Current OIDC token: $(if [[ -n $ACTIONS_ID_TOKEN_REQUEST_TOKEN ]]; then echo "Present"; else echo "Not found"; fi)"
         
         echo "🚀 Starting deployment with azd..."
         echo "Environment: $AZURE_ENV_NAME"
         echo "Location: $AZURE_LOCATION"
+        
+        # Verify Azure CLI login status
+        if ! az account show &>/dev/null; then
+          echo "❌ Azure CLI is not logged in. The Azure/login action should have handled this."
+          exit 1
+        fi
         
         # Initialize azd environment if it doesn't exist
         if ! azd env select $AZURE_ENV_NAME 2>/dev/null; then
