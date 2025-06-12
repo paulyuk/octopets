@@ -101,4 +101,3 @@ jobs:
           azd show --output table || true
 
           ENDPOINT=$(azd show --output json 2>/dev/null | jq -r '.services | to_entries](#)
-
