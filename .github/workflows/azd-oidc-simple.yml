@@ -140,6 +140,8 @@ jobs:
               # Check if container app exists
               if az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" &>/dev/null; then
                 echo "✅ Container app found, applying tag..."
+                # Echo the exact tag being set
+                echo "🏷️ Setting tag: CONTAINER_IMAGE_TAG=$AZURE_CONTAINER_IMAGE_TAG" on resource $CONTAINER_APP_NAME
                 # Tag the container app resource with the image tag
                 az tag update --resource-id "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/$CONTAINER_APP_NAME" \
                               --operation Merge \
