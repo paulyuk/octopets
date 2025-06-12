@@ -31,25 +31,34 @@ jobs:
           export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
           export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
           export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
+          
+          # Display last 4 characters of client ID for debugging
+          if [[ -n "$AZURE_CLIENT_ID" ]]; then
+            CLIENT_ID_LENGTH=${#AZURE_CLIENT_ID}
+            LAST_FOUR=${AZURE_CLIENT_ID:$CLIENT_ID_LENGTH-4:4}
+            echo "🔑 Using client ID ending with: $LAST_FOUR"
+          else
+            echo "⚠️ Client ID is not set"
+          fi
 
-      - name: Log in with Azure (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      # - name: Log in with Azure (OIDC)
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ vars.AZURE_CLIENT_ID }}
+      #     tenant-id: ${{ vars.AZURE_TENANT_ID }}
+      #     subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Configure AZD for Azure CLI authentication
-        shell: bash
-        run: |
-          echo "🔑 Setting up AZD to use Azure CLI authentication..."
-          export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
-          export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
-          export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
-          mkdir -p ~/.azd
-          echo '{"defaults":{"auth":{"useAzureCli":true}}}' > ~/.azd/config.json
-          cat ~/.azd/config.json
-          echo "✅ AZD configured to use Azure CLI authentication"
+      # - name: Configure AZD for Azure CLI authentication
+      #   shell: bash
+      #   run: |
+      #     echo "🔑 Setting up AZD to use Azure CLI authentication..."
+      #     export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
+      #     export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
+      #     export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
+      #     mkdir -p ~/.azd
+      #     echo '{"defaults":{"auth":{"useAzureCli":true}}}' > ~/.azd/config.json
+      #     cat ~/.azd/config.json
+      #     echo "✅ AZD configured to use Azure CLI authentication"
 
       - name: Deploy with azd
         shell: bash
@@ -61,15 +70,14 @@ jobs:
           export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
 
           echo "🔍 Diagnostic information:"
-          echo "Azure CLI version: $(az --version | head -n 1)"
           echo "AZD version: $(azd version)"
-          echo "Current account: $(az account show --query name -o tsv || echo 'Not logged in')"
           echo "Current OIDC token: $(if [[ -n $ACTIONS_ID_TOKEN_REQUEST_TOKEN ]]; then echo 'Present'; else echo 'Not found'; fi)"
 
           echo "🚀 Starting deployment with azd..."
           echo "Environment: $AZURE_ENV_NAME"
           echo "Location: $AZURE_LOCATION"
 
+          azd auth login --client-id $AZURE_CLIENT_ID --federated-credential-provider github --tenant-id $AZURE_TENANT_ID --no-browser
           if ! az account show &>/dev/null; then
             echo "❌ Azure CLI is not logged in. The Azure/login action should have handled this."
             exit 1
