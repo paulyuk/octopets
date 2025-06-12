@@ -55,24 +55,15 @@ jobs:
             echo "⚠️ Client ID is not set"
           fi
 
-      # - name: Log in with Azure (OIDC)
-      #   uses: azure/login@v2
-      #   with:
-      #     client-id: ${{ vars.AZURE_CLIENT_ID }}
-      #     tenant-id: ${{ vars.AZURE_TENANT_ID }}
-      #     subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Set Docker Image Tag Environment Variable
+        run: |
+          # Using a descriptive tag that combines branch, run number, and short SHA
+          # This is the best practice for traceability and immutability.
+          COMMIT_SHA_SHORT=${GITHUB_SHA::7}
+          IMAGE_TAG="${{ github.ref_name }}-${{ github.run_number }}-${COMMIT_SHA_SHORT}"
 
-      # - name: Configure AZD for Azure CLI authentication
-      #   shell: bash
-      #   run: |
-      #     echo "🔑 Setting up AZD to use Azure CLI authentication..."
-      #     export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
-      #     export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
-      #     export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
-      #     mkdir -p ~/.azd
-      #     echo '{"defaults":{"auth":{"useAzureCli":true}}}' > ~/.azd/config.json
-      #     cat ~/.azd/config.json
-      #     echo "✅ AZD configured to use Azure CLI authentication"
+          echo "AZURE_CONTAINER_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "Generated image tag: ${IMAGE_TAG}"
 
       - name: Deploy with azd
         shell: bash
