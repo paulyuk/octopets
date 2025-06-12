@@ -25,6 +25,7 @@ jobs:
       AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       DOTNET_CORE_VERSION: 9.0.x
+      AZD_DEBUG: ${{ vars.AZD_DEBUG || false }}
     
     steps:
       - name: Checkout
@@ -112,7 +113,13 @@ jobs:
             echo "✅ Set container image tag to: $AZURE_CONTAINER_IMAGE_TAG"
             
             # Run azd up with the correct environment name
-            azd up --no-prompt --debug
+            if [ "$AZD_DEBUG" = "true" ]; then
+              echo "🐞 Debug mode enabled for AZD"
+              azd up --no-prompt --debug
+            else
+              echo "🚀 Running AZD in normal mode"
+              azd up --no-prompt
+            fi
             
             # Add resource tag to container app with the image tag
             echo "🏷️ Adding resource tag to container app..."
