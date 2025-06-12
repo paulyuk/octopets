@@ -124,16 +124,33 @@ jobs:
             # Add resource tag to container app with the image tag
             echo "🏷️ Adding resource tag to container app..."
             # Get the container app resource ID
-            RESOURCE_GROUP=$(azd env get-values | grep AZURE_RESOURCE_GROUP | cut -d '=' -f2)
+            RESOURCE_GROUP=$(azd env get-values | grep AZURE_RESOURCE_GROUP | cut -d '=' -f2 || echo "")
             CONTAINER_APP_NAME="octopetsapi"
+            
+            if [ -z "$RESOURCE_GROUP" ]; then
+              echo "⚠️ Could not determine resource group from azd env get-values"
+              # Try alternate method to get resource group
+              RESOURCE_GROUP=$(az group list --query "[?contains(name,'$AZURE_ENV_NAME')].name" -o tsv | head -n 1)
+              echo "Alternate method found resource group: $RESOURCE_GROUP"
+            fi
             
             if [ -n "$RESOURCE_GROUP" ] && [ -n "$CONTAINER_APP_NAME" ]; then
               echo "Resource Group: $RESOURCE_GROUP, Container App: $CONTAINER_APP_NAME"
-              # Tag the container app resource with the image tag
-              az tag update --resource-id "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/$CONTAINER_APP_NAME" \
-                            --operation Merge \
-                            --tags "AZURE_CONTAINER_IMAGE_TAG=$AZURE_CONTAINER_IMAGE_TAG"
-              echo "✅ Container app tagged with image tag: $AZURE_CONTAINER_IMAGE_TAG"
+              
+              # Check if container app exists
+              if az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" &>/dev/null; then
+                echo "✅ Container app found, applying tag..."
+                # Tag the container app resource with the image tag
+                az tag update --resource-id "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/$CONTAINER_APP_NAME" \
+                              --operation Merge \
+                              --tags "AZURE_CONTAINER_IMAGE_TAG=$AZURE_CONTAINER_IMAGE_TAG" || \
+                echo "⚠️ Failed to add tag to container app, but continuing workflow"
+              else
+                echo "⚠️ Container app '$CONTAINER_APP_NAME' not found in resource group '$RESOURCE_GROUP'"
+                # List existing container apps in the resource group
+                echo "Available container apps in the resource group:"
+                az containerapp list --resource-group "$RESOURCE_GROUP" --query "[].name" -o tsv || echo "No container apps found or failed to list"
+              fi
             else
               echo "⚠️ Could not determine container app details for tagging"
             fi
