@@ -2,6 +2,16 @@ name: Deploy with AZD and OIDC
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+          - test
 
 # Required permissions for OIDC
 permissions:
@@ -12,30 +22,27 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
     - name: Install azd
-      uses: Azure/setup-azd@v2
-
-    - name: Configure Azure CLI authentication
+      uses: Azure/setup-azd@v2    - name: Configure Azure CLI authentication
       shell: bash
       run: |
         echo "🔑 Setting up Azure CLI authentication..."
         
         # Explicitly set environment variables
-        export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
-        export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
-        export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
-
-    - name: Log in with Azure (OIDC)
+        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"- name: Log in with Azure (OIDC)
       uses: azure/login@v2
       with:
-        client-id: ${{ vars.AZURE_CLIENT_ID }}
-        tenant-id: ${{ vars.AZURE_TENANT_ID }}
-        subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         
     - name: Configure AZD for Azure CLI authentication
       shell: bash
@@ -57,13 +64,12 @@ jobs:
         cat ~/.azd/config.json
         
         echo "✅ AZD configured to use Azure CLI authentication"
-        
-    - name: Deploy with azd
+          - name: Deploy with azd
       shell: bash
       run: |
-        # Set environment variables
-        export AZURE_ENV_NAME="${{ vars.AZURE_ENV_NAME || 'dev' }}"
-        export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus2' }}"
+        # Set environment variables based on GitHub environment
+        export AZURE_ENV_NAME="${{ github.event.inputs.environment || 'dev' }}"
+        export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus' }}"
         export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
         export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
         export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
