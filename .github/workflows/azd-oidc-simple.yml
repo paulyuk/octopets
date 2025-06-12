@@ -82,7 +82,7 @@ jobs:
           echo "🚀 Starting deployment with azd..."
           echo "Environment: $AZURE_ENV_NAME"
           echo "Location: $AZURE_LOCATION"
-          echo "Azure container image tag: $IMAGE_TAG"
+          echo "Azure container image tag: $AZURE_CONTAINER_IMAGE_TAG"
 
           azd auth login --client-id $AZURE_CLIENT_ID --federated-credential-provider github --tenant-id $AZURE_TENANT_ID
 
