@@ -1,17 +1,7 @@
 name: Deploy with AZD and OIDC
 
 on:
-  workflow_d        echo "✅ AZD configured to use Azure CLI authentication"
-        
-    - name: Deploy with azd
-      shell: bash
-      run: |
-        # Set environment variables
-        export AZURE_ENV_NAME="${{ vars.AZURE_ENV_NAME || 'dev' }}"
-        export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus2' }}"
-        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
-        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+  workflow_dispatch:
 
 # Required permissions for OIDC
 permissions:
@@ -38,7 +28,7 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         enable-oidc: true
         federated-credential-provider: github
-        # Ensure additional settings for headless operation        allow-no-subscriptions: false
+        allow-no-subscriptions: false
         
     - name: Configure AZD for Azure CLI authentication
       shell: bash
@@ -59,7 +49,9 @@ jobs:
         # Verify AZD is using the correct configuration
         cat ~/.azd/config.json
         
-        echo "✅ AZD configured to use Azure CLI authentication"- name: Deploy with azd
+        echo "✅ AZD configured to use Azure CLI authentication"
+        
+    - name: Deploy with azd
       shell: bash
       run: |
         # Set environment variables
