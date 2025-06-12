@@ -101,7 +101,7 @@ jobs:
             azd provision --preview
           else
             echo "🚀 Main branch - deploying application"
-            azd up --no-prompt
+            azd up --no-prompt --environment $AZURE_CONTAINER_IMAGE_TAG
           fi
 
       - name: Get deployment outputs
