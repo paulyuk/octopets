@@ -7,9 +7,6 @@ on:
       - main
   pull_request:
     branches: [main]
-
-# Add manual trigger
-on:
   workflow_dispatch:
     inputs:
       environment:
