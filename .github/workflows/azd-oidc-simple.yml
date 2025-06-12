@@ -55,6 +55,13 @@ jobs:
             echo "⚠️ Client ID is not set"
           fi
 
+      - name: Log in with Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       - name: Set Docker Image Tag Environment Variable
         run: |
           # Using a descriptive tag that combines branch, run number, and short SHA
@@ -107,6 +114,23 @@ jobs:
             
             # Run azd up with the correct environment name
             azd up --no-prompt --debug
+            
+            # Add resource tag to container app with the image tag
+            echo "🏷️ Adding resource tag to container app..."
+            # Get the container app resource ID
+            RESOURCE_GROUP=$(azd env get-values | grep AZURE_RESOURCE_GROUP | cut -d '=' -f2)
+            CONTAINER_APP_NAME=$(azd env get-values | grep AZURE_CONTAINER_APPS_ENDPOINT | cut -d '.' -f1)
+            
+            if [ -n "$RESOURCE_GROUP" ] && [ -n "$CONTAINER_APP_NAME" ]; then
+              echo "Resource Group: $RESOURCE_GROUP, Container App: $CONTAINER_APP_NAME"
+              # Tag the container app resource with the image tag
+              az tag update --resource-id "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/$CONTAINER_APP_NAME" \
+                            --operation Merge \
+                            --tags "AZURE_CONTAINER_IMAGE_TAG=$AZURE_CONTAINER_IMAGE_TAG"
+              echo "✅ Container app tagged with image tag: $AZURE_CONTAINER_IMAGE_TAG"
+            else
+              echo "⚠️ Could not determine container app details for tagging"
+            fi
           fi
 
       - name: Get deployment outputs
