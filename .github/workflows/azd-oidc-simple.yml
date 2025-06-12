@@ -101,7 +101,12 @@ jobs:
             azd provision --preview
           else
             echo "🚀 Main branch - deploying application"
-            azd up --no-prompt --debug --environment $AZURE_CONTAINER_IMAGE_TAG
+            # Set container image tag before running azd up
+            azd env set AZURE_CONTAINER_IMAGE_TAG $AZURE_CONTAINER_IMAGE_TAG
+            echo "✅ Set container image tag to: $AZURE_CONTAINER_IMAGE_TAG"
+            
+            # Run azd up with the correct environment name
+            azd up --no-prompt --debug
           fi
 
       - name: Get deployment outputs
