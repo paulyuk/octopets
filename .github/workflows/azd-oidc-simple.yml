@@ -25,97 +25,82 @@ jobs:
     environment: ${{ github.event.inputs.environment || 'dev' }}
     
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install azd
-      uses: Azure/setup-azd@v2    - name: Configure Azure CLI authentication
-      shell: bash
-      run: |
-        echo "🔑 Setting up Azure CLI authentication..."
-        
-        # Explicitly set environment variables
-        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
-        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
-        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"- name: Log in with Azure (OIDC)
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        
-    - name: Configure AZD for Azure CLI authentication
-      shell: bash
-      run: |
-        echo "🔑 Setting up AZD to use Azure CLI authentication..."
-        
-        # Explicitly set environment variables
-        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
-        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
-        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-        
-        # Create the azd config directory if it doesn't exist
-        mkdir -p ~/.azd
-        
-        # Configure AZD to use Azure CLI authentication instead of interactive browser login
-        echo '{"defaults":{"auth":{"useAzureCli":true}}}' > ~/.azd/config.json
-        
-        # Verify AZD is using the correct configuration
-        cat ~/.azd/config.json
-        
-        echo "✅ AZD configured to use Azure CLI authentication"
-          - name: Deploy with azd
-      shell: bash
-      run: |
-        # Set environment variables based on GitHub environment
-        export AZURE_ENV_NAME="${{ github.event.inputs.environment || 'dev' }}"
-        export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus' }}"
-        export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-        export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
-        export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
-        
-        # Display diagnostic information
-        echo "🔍 Diagnostic information:"
-        echo "Azure CLI version: $(az --version | head -n 1)"
-        echo "AZD version: $(azd version)"
-        echo "Current account: $(az account show --query name -o tsv || echo 'Not logged in')"
-        echo "Current OIDC token: $(if [[ -n $ACTIONS_ID_TOKEN_REQUEST_TOKEN ]]; then echo "Present"; else echo "Not found"; fi)"
-        
-        echo "🚀 Starting deployment with azd..."
-        echo "Environment: $AZURE_ENV_NAME"
-        echo "Location: $AZURE_LOCATION"
-        
-        # Verify Azure CLI login status
-        if ! az account show &>/dev/null; then
-          echo "❌ Azure CLI is not logged in. The Azure/login action should have handled this."
-          exit 1
-        fi
-        
-        # Initialize azd environment if it doesn't exist
-        if ! azd env select $AZURE_ENV_NAME 2>/dev/null; then
-          echo "📦 Creating new azd environment: $AZURE_ENV_NAME"
-          azd env new $AZURE_ENV_NAME --location $AZURE_LOCATION --subscription $AZURE_SUBSCRIPTION_ID
-        fi
-        
-        # Deploy the application
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          echo "🔍 PR detected - running provision with preview"
-          azd provision --preview
-        else
-          echo "🚀 Main branch - deploying application"
-          azd up --no-prompt
-        fi
+      - name: Install azd
+        uses: Azure/setup-azd@v2
 
-    - name: Get deployment outputs
-      if: github.event_name != 'pull_request'
-      shell: bash
-      run: |
-        echo "📋 Getting deployment information..."
-        azd show --output table || true
-        
-        # Try to get endpoint
-        ENDPOINT=$(azd show --output json 2>/dev/null | jq -r '.services | to_entries | .[0].value.endpoint // empty' || echo "")
-        if [ -n "$ENDPOINT" ]; then
-          echo "🌐 Application deployed to: $ENDPOINT"
-          echo "ENDPOINT=$ENDPOINT" >> $GITHUB_OUTPUT
-        fi
+      - name: Configure Azure CLI authentication
+        shell: bash
+        run: |
+          echo "🔑 Setting up Azure CLI authentication..."
+          export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+          export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+
+      - name: Log in with Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Configure AZD for Azure CLI authentication
+        shell: bash
+        run: |
+          echo "🔑 Setting up AZD to use Azure CLI authentication..."
+          export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+          export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          mkdir -p ~/.azd
+          echo '{"defaults":{"auth":{"useAzureCli":true}}}' > ~/.azd/config.json
+          cat ~/.azd/config.json
+          echo "✅ AZD configured to use Azure CLI authentication"
+
+      - name: Deploy with azd
+        shell: bash
+        run: |
+          export AZURE_ENV_NAME="${{ github.event.inputs.environment || 'dev' }}"
+          export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus' }}"
+          export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+
+          echo "🔍 Diagnostic information:"
+          echo "Azure CLI version: $(az --version | head -n 1)"
+          echo "AZD version: $(azd version)"
+          echo "Current account: $(az account show --query name -o tsv || echo 'Not logged in')"
+          echo "Current OIDC token: $(if [[ -n $ACTIONS_ID_TOKEN_REQUEST_TOKEN ]]; then echo 'Present'; else echo 'Not found'; fi)"
+
+          echo "🚀 Starting deployment with azd..."
+          echo "Environment: $AZURE_ENV_NAME"
+          echo "Location: $AZURE_LOCATION"
+
+          if ! az account show &>/dev/null; then
+            echo "❌ Azure CLI is not logged in. The Azure/login action should have handled this."
+            exit 1
+          fi
+
+          if ! azd env select $AZURE_ENV_NAME 2>/dev/null; then
+            echo "📦 Creating new azd environment: $AZURE_ENV_NAME"
+            azd env new $AZURE_ENV_NAME --location $AZURE_LOCATION --subscription $AZURE_SUBSCRIPTION_ID
+          fi
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "🔍 PR detected - running provision with preview"
+            azd provision --preview
+          else
+            echo "🚀 Main branch - deploying application"
+            azd up --no-prompt
+          fi
+
+      - name: Get deployment outputs
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          echo "📋 Getting deployment information..."
+          azd show --output table || true
+
+          ENDPOINT=$(azd show --output json 2>/dev/null | jq -r '.services | to_entries](#)
+
