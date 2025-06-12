@@ -19,6 +19,17 @@ jobs:
 
     - name: Install azd
       uses: Azure/setup-azd@v2
+
+    - name: Configure Azure CLI authentication
+      shell: bash
+      run: |
+        echo "🔑 Setting up Azure CLI authentication..."
+        
+        # Explicitly set environment variables
+        export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
+        export AZURE_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
+        export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
+
     - name: Log in with Azure (OIDC)
       uses: azure/login@v2
       with:
