@@ -77,7 +77,7 @@ jobs:
       - name: Deploy with azd
         shell: bash
         run: |
-          export AZURE_ENV_NAME="${{ github.event.inputs.environment || 'dev' }}"
+          export AZURE_ENV_NAME=${{ vars.AZURE_ENV_NAME || 'octopets' }}
           export AZURE_LOCATION="${{ vars.AZURE_LOCATION || 'eastus2' }}"
           export AZURE_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
           export AZURE_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
