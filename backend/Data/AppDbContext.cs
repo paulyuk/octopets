@@ -27,7 +27,7 @@ public class AppDbContext : DbContext
         // Configure JSON serialization for List properties
         var stringListComparer = new ValueComparer<List<string>>(
             (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
-            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v == null ? 0 : v.GetHashCode())),
             c => c.ToList());
 
         modelBuilder.Entity<Listing>()
