@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Octopets.Backend.Models;
 using System.Text.Json;
 
@@ -24,17 +25,31 @@ public class AppDbContext : DbContext
             .HasForeignKey(r => r.ListingId);
 
         // Configure JSON serialization for List properties
+        var stringListComparer = new ValueComparer<List<string>>(
+            (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v == null ? 0 : v.GetHashCode())),
+            c => c.ToList());
+
         modelBuilder.Entity<Listing>()
             .Property(l => l.AllowedPets)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!);
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!)
+            .Metadata.SetValueComparer(stringListComparer);
 
         modelBuilder.Entity<Listing>()
             .Property(l => l.Amenities)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!);
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!)
+            .Metadata.SetValueComparer(stringListComparer);
+
+        modelBuilder.Entity<Listing>()
+            .Property(l => l.Photos)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!)
+            .Metadata.SetValueComparer(stringListComparer);
 
         // Seed data
         SeedData(modelBuilder);

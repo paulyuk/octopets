@@ -1,0 +1,58 @@
+location: {{ .Env.AZURE_LOCATION }}
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    ? {{ .Env.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID }}
+    : {}
+properties:
+  environmentId: {{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_ID }}
+  configuration:
+    activeRevisionsMode: single
+    ingress:
+      external: true
+      targetPort: 8080
+      transport: http
+      allowInsecure: false
+    registries:
+      - server: {{ .Env.AZURE_CONTAINER_REGISTRY_ENDPOINT }}
+        identity: {{ .Env.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID }}
+    secrets:
+      - name: connectionstrings--applicationinsights
+        value: {{ .Env.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+  template:
+    containers:
+      - image: {{ .Image }}
+        name: octopetsapi
+        env:
+          - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES
+            value: "true"
+          - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES
+            value: "true"
+          - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY
+            value: in_memory
+          - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+            value: "true"
+          - name: HTTP_PORTS
+            value: "8080"
+          - name: ConnectionStrings__ApplicationInsights
+            secretRef: connectionstrings--applicationinsights
+          - name: ERRORS
+            value: "false"
+          - name: ENABLE_CRUD
+            value: "false"
+          - name: EnableSwagger
+            value: "true"
+        resources:
+          cpu: 1.0
+          memory: 2Gi
+    scale:
+      minReplicas: 2
+      maxReplicas: 10
+      rules:
+        - name: http-rule
+          http:
+            metadata:
+              concurrentRequests: "100"
+tags:
+  azd-service-name: octopetsapi
+  aspire-resource-name: octopetsapi
