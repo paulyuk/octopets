@@ -25,9 +25,9 @@ public class AppDbContext : DbContext
 
         // Configure JSON serialization for List properties with ValueComparers
         var stringListComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
-            (c1, c2) => c1!.SequenceEqual(c2!),
-            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-            c => c.ToList());
+            (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+            c => c == null ? 0 : c.Aggregate(0, (a, v) => HashCode.Combine(a, v == null ? 0 : v.GetHashCode())),
+            c => c == null ? new List<string>() : c.ToList());
 
         modelBuilder.Entity<Listing>()
             .Property(l => l.AllowedPets)
