@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var api = builder.AddProject<Projects.Octopets_Backend>("octopetsapi")
         .WithExternalHttpEndpoints()
-        .WithEnvironment("ERRORS", builder.ExecutionContext.IsPublishMode ? "true" : "false")
+        .WithEnvironment("ERRORS", "false")
         .WithEnvironment("ENABLE_CRUD", builder.ExecutionContext.IsPublishMode ? "false" : "true");
 
 // Only add Application Insights in non-development environments
