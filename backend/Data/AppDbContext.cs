@@ -23,18 +23,32 @@ public class AppDbContext : DbContext
             .WithMany(l => l.Reviews)
             .HasForeignKey(r => r.ListingId);
 
-        // Configure JSON serialization for List properties
+        // Configure JSON serialization for List properties with ValueComparers
+        var stringListComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
+            (c1, c2) => c1!.SequenceEqual(c2!),
+            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            c => c.ToList());
+
         modelBuilder.Entity<Listing>()
             .Property(l => l.AllowedPets)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!);
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!)
+            .Metadata.SetValueComparer(stringListComparer);
 
         modelBuilder.Entity<Listing>()
             .Property(l => l.Amenities)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!);
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!)
+            .Metadata.SetValueComparer(stringListComparer);
+
+        modelBuilder.Entity<Listing>()
+            .Property(l => l.Photos)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!)
+            .Metadata.SetValueComparer(stringListComparer);
 
         // Seed data
         SeedData(modelBuilder);
